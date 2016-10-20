@@ -275,7 +275,7 @@ tar:
 	rm -rf /tmp/xv6
 	mkdir -p /tmp/xv6
 	cp dist/* dist/.gdbinit.tmpl /tmp/xv6
-	(cd /tmp; tar cf - xv6) | gzip >xv6-rev5.tar.gz
+	(cd /tmp; tar cf - xv6) | gzip >xv6-rev9.tar.gz
 
 submit-help:
 	@echo "This makefile target is used to convieniently package your modifications for grading"

@@ -19,7 +19,7 @@ void *thread(void *arg)
 	printf(1, "thread %d: started...\n", *(int*)arg);
 
 	for (i=0; i<TARGET_COUNT_PER_THREAD; i++) {
-		sem_wait(SEMAPHORE_NUM, 1);
+		sem_wait(SEMAPHORE_NUM);
 		
 		counter = g_counter;
 		sleep(0);
@@ -27,15 +27,16 @@ void *thread(void *arg)
 		sleep(0);
 		g_counter = counter;
 
-		sem_signal(SEMAPHORE_NUM, 1);
+		sem_signal(SEMAPHORE_NUM);
 	}
 
-	exit();
+	texit(arg);
 }
 
 int main(int argc, char **argv)
 {
 	int i, j;
+	int passed = 1;
 	int sem_size;
 	int final_counter;
 	int final_target = NUM_THREADS*TARGET_COUNT_PER_THREAD;
@@ -93,7 +94,16 @@ int main(int argc, char **argv)
 	// Wait for all children
 	for (i=0; i<NUM_THREADS; i++) {
 		void *joinstack;
-		join(&joinstack);
+		void* retval;
+		int r;
+		r = join(&joinstack, &retval);
+
+		if (r<0){
+			passed = 0;
+		}
+		if(*(int*)retval != i){
+			passed = 0;
+		}
 		for (j=0; j<NUM_THREADS; j++) {
 			if (joinstack == stacks[i]) {
 				printf(1, "main: thread %d joined...\n", i);
@@ -106,7 +116,10 @@ int main(int argc, char **argv)
 	// Check the result
 	final_counter = g_counter;
 	printf(1, "Final counter is %d, target is %d\n", final_counter, final_target);
-	if (final_counter == final_target)
+	if (passed == 0){
+		printf(1, "JOIN ERROR, TEST FAILED");
+	}
+	else if (final_counter == final_target)
 		printf(1, "TEST PASSED!\n");
 	else
 		printf(1, "TEST FAILED!\n");
