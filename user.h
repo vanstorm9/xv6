@@ -26,7 +26,8 @@ int uptime(void);
 int halt(void);
 int signal_register(int, void(*)(int));
 int signal_restorer(void(*)(void));
-
+int mprotect(void *addr, int len, int prot);
+ 
 // ulib.c
 int stat(char*, struct stat*);
 char* strcpy(char*, char*);
