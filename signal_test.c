@@ -2,7 +2,7 @@
 #include "user.h"
 #include "signal.h"
 
-void handle_signal(int signum)
+void handle_signal(int signum, siginfo_t signalinfo)
 {
     unsigned addr_signum = (unsigned) &signum;
     unsigned addr_retaddr = addr_signum + 16;

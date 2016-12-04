@@ -84,6 +84,12 @@ trap(struct trapframe *tf)
         break;
       }
 
+  case 14:
+	if(proc->handlers[SIGSEGV] != (sighandler_t) -1){
+		signal_deliver(SIGSEGV, proc->sig_info);
+	}
+
+
   //PAGEBREAK: 13
   default:
     if(proc == 0 || (tf->cs&3) == 0){
