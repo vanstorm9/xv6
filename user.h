@@ -41,4 +41,6 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
-int signal(int, void(*)(int));
+//int signal(int);
+//int signal(int, void(*)(int));
+int signal(int, void(*)(int), siginfo_t);
