@@ -469,7 +469,7 @@ procdump(void)
   }
 }
 
-void signal_deliver(int signum)
+void signal_deliver(int signum, siginfo_t info)
 {
 	uint old_eip = proc->tf->eip;
 

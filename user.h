@@ -1,3 +1,5 @@
+#include "signal.h"
+
 struct stat;
 struct rtcdate;
 
@@ -24,7 +26,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int halt(void);
-int signal_register(int, void(*)(int));
+int signal_register(int, sighandler_t);
 int signal_restorer(void(*)(void));
 int mprotect(void *addr, int len, int prot);
  
@@ -42,5 +44,6 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 //int signal(int);
-//int signal(int, void(*)(int));
-int signal(int, void(*)(int), siginfo_t);
+//int signal(int, sighandler_t);
+//int signal(void(*)(int));
+int signal(int, void(*)(int, siginfo_t));

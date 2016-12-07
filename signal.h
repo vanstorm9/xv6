@@ -17,6 +17,6 @@ typedef struct
 }siginfo_t;
 */
 
-typedef void (*sighandler_t)(int);
+typedef void (*sighandler_t)(int, siginfo_t);
 
 #endif

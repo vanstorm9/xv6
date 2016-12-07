@@ -80,7 +80,7 @@ trap(struct trapframe *tf)
    
    case T_DIVIDE:
       if (proc->handlers[SIGFPE] != (sighandler_t) -1) {
-        signal_deliver(SIGFPE);
+        signal_deliver(SIGFPE, proc->sig_info);
         break;
       }
 

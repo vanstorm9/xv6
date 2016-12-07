@@ -131,7 +131,7 @@ int sys_signal_restorer(void)
     return 0;
 }
 
-int mprotect(void *addr, int len, int prot)
+int sys_mprotect(void *addr, int len, int prot)
 {
 	return 0;
 }
