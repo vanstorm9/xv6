@@ -157,16 +157,16 @@ int sys_mprotect(void *addr, int len, int prot)
 
 	//cprintf("Starting sys_mprotect add: %d\n", (int) addr);
 	int i;
-	int align;
 	char *PhAdd;
 
 
-	
+
+	int align;
 	align = (int)(((int) addr) % PGSIZE);
 	
 	if(align != 0)
 	{
-		cprintf("Not aligned\n");
+		PhAdd = (char*)PGROUNDDOWN((uint)addr);
 		// Helps rounds faulting virtual address down to page boundary
 		
 	}
@@ -200,7 +200,6 @@ int sys_mprotect(void *addr, int len, int prot)
 			
 			proc->sig_info.addr = (uint)PhAdd;
 		} else {
-			cprintf("Returning -1 instead\n");
 			return -1;
 		}
 	}
