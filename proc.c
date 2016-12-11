@@ -469,7 +469,7 @@ procdump(void)
   }
 }
 
-void signal_deliver(int signum, siginfo_t info)
+void signal_deliver(int signum, siginfo_t sig_i)
 {
 	uint old_eip = proc->tf->eip;
 
@@ -477,9 +477,12 @@ void signal_deliver(int signum, siginfo_t info)
 	*((uint*)(proc->tf->esp - 8))  = proc->tf->eax;			// eax
 	*((uint*)(proc->tf->esp - 12)) = proc->tf->ecx;			// ecx
 	*((uint*)(proc->tf->esp - 16)) = proc->tf->edx;			// edx
-	*((uint*)(proc->tf->esp - 20)) = (uint) signum;			// signal number
-	*((uint*)(proc->tf->esp - 24)) = proc->restorer_addr;	// address of restorer
-	proc->tf->esp -= 24;
+	*((uint*)(proc->tf->esp - 20)) = (uint) sig_i.type;
+	*((uint*)(proc->tf->esp - 24)) = (uint) sig_i.addr;
+	*((uint*)(proc->tf->esp - 28)) = (uint) signum;
+	*((uint*)(proc->tf->esp - 32)) = proc->restorer_addr;
+	proc->tf->esp -=32;
+
 	proc->tf->eip = (uint) proc->handlers[signum];
 }
 

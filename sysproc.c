@@ -131,8 +131,84 @@ int sys_signal_restorer(void)
     return 0;
 }
 
+uint* ThisWalkPgDir(pde_t *pgdir , const void *va, int alloc)
+{
+	//cprintf("ThisWalkPgDir\n");
+	pde_t *pde;
+	pte_t *pgtab;
+
+	pde = &pgdir[PDX(va)];
+	if(*pde & PTE_P)
+	{
+		pgtab = (pte_t*)p2v(PTE_ADDR(*pde));
+	}else{
+		if(!alloc || (pgtab = (pte_t*)kalloc()) == 0)
+			return 0;
+		memset(pgtab, 0, PGSIZE);
+		*pde = v2p(pgtab) | PTE_P | PTE_W | PTE_U;
+	}
+
+	return &pgtab[PTX(va)];
+}
+
+
 int sys_mprotect(void *addr, int len, int prot)
 {
+
+	//cprintf("Starting sys_mprotect add: %d\n", (int) addr);
+	int i;
+	int align;
+	char *PhAdd;
+
+
+	
+	align = (int)(((int) addr) % PGSIZE);
+	
+	if(align != 0)
+	{
+		cprintf("Not aligned\n");
+		// Helps rounds faulting virtual address down to page boundary
+		
+	}
+	//cprintf("PhAdd: %d\n", PhAdd);	
+	// to convert virtual address to physical address
+	
+	for(i=0; i< len; i+= PGSIZE)
+	{
+		//cprintf("i: %d\n", i);
+
+		PhAdd = (char*)PGROUNDDOWN((uint)i);
+
+		pte_t *pte = ThisWalkPgDir(proc->pgdir, PhAdd+i, 0);
+
+		//cprintf("prot: %d\n", prot);
+		//cprintf("pte: %d\n", pte);
+
+		if(((*pte & PTE_U) != 0) && ((*pte & PTE_P) != 0))
+		{
+			if(prot == PROT_READ)
+			{
+				// Notifies sig_info that it is PROT_READ
+				*pte = *pte & (~PTE_W);
+				proc->sig_info.type = PROT_READ;
+			} else if (prot == PROT_WRITE){
+				// Notifies sig_info that it is PROT_PROT
+				
+				*pte = *pte | (PTE_W);
+				proc->sig_info.type = PROT_WRITE;
+			}
+			
+			proc->sig_info.addr = (uint)PhAdd;
+		} else {
+			cprintf("Returning -1 instead\n");
+			return -1;
+		}
+	}
+	//cprintf("Exiting if statement\n");
+
+
+
+
 	return 0;
 }
 
