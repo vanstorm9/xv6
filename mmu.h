@@ -136,8 +136,9 @@ struct segdesc {
 #define PTE_PWT         0x008   // Write-Through
 #define PTE_PCD         0x010   // Cache-Disable
 #define PTE_A           0x020   // Accessed
-#define PTE_D           0x040   // Dirty
+#define PTE_D           0x040   // Dirty:sh
 #define PTE_PS          0x080   // Page Size
+#define PTE_SH          (0x1 << 9)   // Shared Memory (with child via fork) = 0x1
 #define PTE_MBZ         0x180   // Bits must be zero
 
 // Address in page table or page directory entry

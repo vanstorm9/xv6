@@ -336,6 +336,28 @@ bad:
   return 0;
 }
 
+pde_t*
+duplicateuvm(pde_t *pgdir, uint sz){
+  pte_t *pte;
+  uint i;
+
+  for(i = 0; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, void(*) i, 0)) == 0){
+      panic("duplicateuvm: pte should exist");
+    }
+
+    if(!(*pte & PTE_P)){
+      panic("duplicateuvm: page not present");
+    }
+
+    // Set write bit to false.
+    *pte = *pte & ~PTE_W;
+    *pte = *pte & PTE_SH;
+  }
+
+  return pgdir;
+}
+
 //PAGEBREAK!
 // Map user virtual address to kernel address.
 char*
