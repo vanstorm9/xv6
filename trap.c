@@ -85,8 +85,16 @@ trap(struct trapframe *tf)
       }
 
   case 14:
-	if(proc->handlers[SIGSEGV] != (sighandler_t) -1){
-		signal_deliver(SIGSEGV, proc->sig_info);
+	if(tf->err == 7){ // if(proc->handlers[SIGSEGV] != (sighandler_t) -1){
+    // Check to see if page is shared from COW
+
+		// Shared memory found...
+		// giving child dedicated memory and setting to writable
+    if(isshared() != 0){
+      cow();
+    }
+		// signal_deliver(SIGSEGV, proc->sig_info);
+		break;
 	}
 
 

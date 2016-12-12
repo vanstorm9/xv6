@@ -37,7 +37,7 @@ int main(void)
         t1 = uptime();
         if(cowfork() == 0)
         {
-            exit();
+          exit();
         }
         else
         {

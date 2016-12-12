@@ -6,6 +6,10 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "spinlock.h"
+
+int cowcount[PGSIZE];
+struct spinlock cowlock;
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -265,8 +269,27 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = p2v(pa);
-      kfree(v);
-      *pte = 0;
+
+      if((*pte & PTE_SH) != 0){
+        // freeing memory that's shared will
+        // cause segfaults...
+
+        acquire(&cowlock);
+
+        if(cowcount[pa/PGSIZE] > 0){
+          cowcount[pa/PGSIZE]--;
+        }
+        else{
+          kfree(v);
+          *pte = 0;
+        }
+
+        release(&cowlock);
+      }
+      else{
+        kfree(v);
+        *pte = 0;
+      }
     }
   }
   return newsz;
@@ -338,11 +361,15 @@ bad:
 
 pde_t*
 duplicateuvm(pde_t *pgdir, uint sz){
+  pde_t* d;
   pte_t *pte;
-  uint i;
+  uint pa, i, flags;
+
+  if((d = setupkvm()) == 0)
+    return 0;
 
   for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walkpgdir(pgdir, void(*) i, 0)) == 0){
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0){
       panic("duplicateuvm: pte should exist");
     }
 
@@ -352,10 +379,58 @@ duplicateuvm(pde_t *pgdir, uint sz){
 
     // Set write bit to false.
     *pte = *pte & ~PTE_W;
-    *pte = *pte & PTE_SH;
+    *pte = *pte | PTE_SH;
+
+    pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte);
+
+		acquire(&cowlock);
+    cowcount[pa/PGSIZE]++;
+    release(&cowlock);
+
+    if(mappages(d, (void*) i, PGSIZE, pa, flags) < 0)
+      goto bad;
   }
 
-  return pgdir;
+  lcr3(v2p(pgdir));
+
+  return d;
+
+bad:
+  cprintf("something bad happened...\n");
+  freevm(d);
+  return 0;
+}
+
+int isshared(){
+  pte_t* pte = walkpgdir(proc->pgdir, (void *) rcr2(), 1);
+  return (*pte & PTE_SH) != 0;
+}
+
+void cow(){
+  pte_t* pte;
+  uint pa;
+  char* mem;
+  uint va = rcr2();
+
+  pte = walkpgdir(proc->pgdir, (void*) va, 1);
+
+  pa = PTE_ADDR(*pte);
+
+  acquire(&cowlock);
+  if(cowcount[pa/PGSIZE] == 0){
+    *pte = *pte | PTE_W;
+    *pte = *pte | ~PTE_SH;
+  }
+  else{
+    mem = kalloc();
+    memmove(mem, (char*) p2v(pa), PGSIZE);
+    *pte = (*pte & 0xFFF) | v2p(mem) | PTE_W;
+    cowcount[pa/PGSIZE]--;
+  }
+  release(&cowlock);
+
+  lcr3(v2p(proc->pgdir));
 }
 
 //PAGEBREAK!

@@ -29,6 +29,7 @@ int halt(void);
 int signal_register(int, sighandler_t);
 int signal_restorer(void(*)(void));
 int mprotect(void *addr, int len, int prot);
+int cowfork(void);
  
 // ulib.c
 int stat(char*, struct stat*);

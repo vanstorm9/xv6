@@ -1,0 +1,30 @@
+pde_t* d;
+pte_t *pte;
+uint pa, i, flags;
+
+d = setupkvm();
+
+for(i = 0; i < sz; i += PGSIZE){
+if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+panic("duplicateuvm: pte should exist");
+
+if(!(*pte & PTE_P))
+panic("duplicateuvm: page not present");
+
+// Set write bit to false.
+*pte = *pte & ~PTE_W;
+*pte = *pte & PTE_SH;
+
+pa = PTE_ADDR(*pte);
+flags = PTE_FLAGS(*pte);
+
+if(mappages(d, (void*) i, PGSIZE, pa, flags) < 0)
+goto bad;
+
+lcr3(v2p(pgdir));
+
+return d;
+
+bad:
+freevm(d);
+return 0;
